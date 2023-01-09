@@ -13,7 +13,10 @@ namespace authentication_back
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            builder.Services.AddCors(p => p.AddPolicy("corspolicy", build =>
+            {
+                build.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
+            }));
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -22,7 +25,7 @@ namespace authentication_back
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseCors("corspolicy"); 
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
