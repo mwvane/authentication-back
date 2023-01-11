@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace authentication_back.Controllers
 {
@@ -8,34 +6,53 @@ namespace authentication_back.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly User user = new User()
+        public UserController()
         {
-            Id=1,
-            Email = "bzishvili57@gmail.com",
-            Firstname = "Levan",
-            Lastname = "bzisvhili",
-            Password = "test"
-        };
-        [HttpGet("test")]
-        public User LeoGet()
-        {
-            return user;
+            users = StorageHelper.GetUsers();
+            if(users == null)
+            {
+                users= new List<User>();
+            }
         }
-
-        //[Route("api/[controller]/login")]
+        private readonly List<User> users = new List<User>();
         [HttpPost("login")]
         public User Login([FromBody] Dictionary<string, string> payload)
         {
             if(payload.ContainsKey("username") && payload.ContainsKey("password"))
             {
-                string us = payload["username"];
-                string pas = payload["password"];
-                if (payload["username"] == user.Email && payload["password"] == user.Password)
+                string userneme = payload["username"];
+                string password = payload["password"];
+                if(users != null)
                 {
-                    return user;
+                    foreach (var user in users)
+                    {
+                        if (user.Email == userneme && user.Password == password)
+                        {
+                            return user;
+                        }
+                    }
                 }
             }
             return null;
+        }
+        [HttpPost("register")]
+        public bool Register([FromBody] Dictionary<string, string> user) {
+
+            User tmp = new User()
+            {
+                Id = 1,
+                Email= user["username"],
+                Firstname= user["firstname"],
+                Lastname = user["lastname"],
+                Password = user["password"],
+            };
+            this.users.Add(tmp);
+            try
+            {
+                StorageHelper.Save(users);
+                return true;
+            }
+            catch(Exception ex){ return false; }
         }
     }
 }

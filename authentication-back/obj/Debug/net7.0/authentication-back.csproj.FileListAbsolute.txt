@@ -31,3 +31,5 @@ D:\C#\authentication-back\authentication-back\obj\Debug\net7.0\refint\authentica
 D:\C#\authentication-back\authentication-back\obj\Debug\net7.0\authentication-back.pdb
 D:\C#\authentication-back\authentication-back\obj\Debug\net7.0\authentication-back.genruntimeconfig.cache
 D:\C#\authentication-back\authentication-back\obj\Debug\net7.0\ref\authentication-back.dll
+D:\C#\authentication-back\authentication-back\bin\Debug\net7.0\Newtonsoft.Json.dll
+D:\C#\authentication-back\authentication-back\bin\Debug\net7.0\Newtonsoft.Json.Bson.dll
