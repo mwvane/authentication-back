@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace authentication_back
 {
-    public static  class StorageHelper
+    public static class StorageHelper
     {
         public static string defaultPath = Directory.GetCurrentDirectory() + "\\users.json";
         public static void Save(List<User> users)
@@ -16,13 +16,12 @@ namespace authentication_back
         }
         public static List<User> GetUsers()
         {
-            List<User> users = new List<User>();
             if (File.Exists(defaultPath))
             {
                 string justText = File.ReadAllText(defaultPath);
-                List<User> u = JsonConvert.DeserializeObject<List<User>>(justText);
-                Console.WriteLine(u);
-                return u;
+                List<User> user = JsonConvert.DeserializeObject<List<User>>(justText);
+                Console.WriteLine(user);
+                return user;
             }
             return null;
         }

@@ -8,51 +8,57 @@ namespace authentication_back.Controllers
     {
         public UserController()
         {
-            users = StorageHelper.GetUsers();
-            if(users == null)
-            {
-                users= new List<User>();
-            }
+            users = StorageHelper.GetUsers() ?? new List<User>();
         }
-        private readonly List<User> users = new List<User>();
+
+        private readonly List<User> users = new();
+
         [HttpPost("login")]
-        public User Login([FromBody] Dictionary<string, string> payload)
+        public Result Login([FromBody] Dictionary<string, string> payload)
         {
-            if(payload.ContainsKey("username") && payload.ContainsKey("password"))
+            if (payload.ContainsKey("username") && payload.ContainsKey("password"))
             {
                 string userneme = payload["username"];
                 string password = payload["password"];
-                if(users != null)
+
+                foreach (var user in users)
                 {
-                    foreach (var user in users)
+                    if (user.Email == userneme && user.Password == password)
                     {
-                        if (user.Email == userneme && user.Password == password)
-                        {
-                            return user;
-                        }
+                        return new Result() { Res = user};
                     }
                 }
             }
-            return null;
+            return new Result() { Res = false, Error = "Such user not found!"};
         }
-        [HttpPost("register")]
-        public bool Register([FromBody] Dictionary<string, string> user) {
 
-            User tmp = new User()
-            {
-                Id = 1,
-                Email= user["username"],
-                Firstname= user["firstname"],
-                Lastname = user["lastname"],
-                Password = user["password"],
-            };
-            this.users.Add(tmp);
-            try
-            {
-                StorageHelper.Save(users);
-                return true;
+        [HttpPost("register")]
+        public Result Register([FromBody] Dictionary<string, string> user)
+        {
+            if (!Helpers.isUsernameAlreadyExist(user["email"], users)){
+                User newUser = new()
+                {
+                    Id = Helpers.GetMaxId(users) + 1,
+                    Email = user["email"],
+                    Firstname = user["firstname"],
+                    Lastname = user["lastname"],
+                    Password = user["password"],
+                };
+
+                users.Add(newUser);
+
+                try
+                {
+                    StorageHelper.Save(users);
+                    return new Result() { Res = true };
+                }
+                catch (Exception exp)
+                {
+                    Console.WriteLine(exp.Message);
+                    return new Result() { Res = null, Error = exp.Message};
+                }
             }
-            catch(Exception ex){ return false; }
+            return new Result() { Res = null, Error = "User already exist!"};
         }
     }
 }
