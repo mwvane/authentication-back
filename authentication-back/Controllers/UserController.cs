@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using authentication_back.Models;
+using Microsoft.AspNetCore.Mvc;
+using System.Text.RegularExpressions;
 
 namespace authentication_back.Controllers
 {
@@ -6,9 +8,10 @@ namespace authentication_back.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        public UserController()
+        private readonly MyDbContext _context;
+        public UserController(MyDbContext context)
         {
-            users = StorageHelper.GetUsers() ?? new List<User>();
+            _context = context;
         }
 
         private readonly List<User> users = new();
@@ -20,45 +23,84 @@ namespace authentication_back.Controllers
             {
                 string userneme = payload["username"];
                 string password = payload["password"];
-
-                foreach (var user in users)
+                User user = null;
+                try
                 {
-                    if (user.Email == userneme && user.Password == password)
+                    user = _context.Users.Where(user => user.Email == userneme && user.Password == password).FirstOrDefault();
+                    if (user != null)
                     {
-                        return new Result() { Res = user};
+                        return new Result() { Res = user };
                     }
+                    return new Result() { Res = null, Errors = new List<string>() { "Incorrect username or passsword" } };
                 }
+                catch
+                {
+                    return new Result() { Res = null, Errors = new List<string>() { "something went wrong" } };
+                }
+
+
+
             }
-            return new Result() { Res = false, Error = "Such user not found!"};
+            return new Result() { Res = false, Errors = new List<string>() { "Username or passwprd is incorrect!" } };
         }
 
         [HttpPost("register")]
         public Result Register([FromBody] Dictionary<string, string> user)
         {
-            if (!Helpers.isUsernameAlreadyExist(user["email"], users)){
+            bool usernameAlreadyExists = false;
+
+            usernameAlreadyExists = _context.Users.Where(u => u.Email == user["firstname"]).FirstOrDefault() != null;
+
+            if (usernameAlreadyExists)
+            {
                 User newUser = new()
                 {
-                    Id = Helpers.GetMaxId(users) + 1,
                     Email = user["email"],
                     Firstname = user["firstname"],
                     Lastname = user["lastname"],
                     Password = user["password"],
                 };
-
-                users.Add(newUser);
-
-                try
+                List<string> errors = Validateuser(newUser);
+                if (errors.Count == 0)
                 {
-                    StorageHelper.Save(users);
-                    return new Result() { Res = true };
+                    _context.Add(newUser);
+                    try
+                    {
+                        _context.SaveChanges();
+                        return new Result() { Res = true };
+                    }
+                    catch (Exception exp)
+                    {
+                        Console.WriteLine(exp.Message);
+                        return new Result() { Res = null, Errors = errors };
+                    }
                 }
-                catch (Exception exp)
-                {
-                    Console.WriteLine(exp.Message);
-                    return new Result() { Res = null, Error = exp.Message};
-                }
+                return new Result() { Res = null, };
             }
-            return new Result() { Res = null, Error = "User already exist!"};
+            return new Result() { Res = null, Errors = new List<string>() { "User already exists!" } };
+        }
+
+        private List<string> Validateuser(User user)
+        {
+            List<string> errors = new List<string>();
+            if (user.Firstname.Length < 2)
+            {
+                errors.Add("Firstname minimum length must be 2 character");
+            }
+            if (user.Password.Length < 6)
+            {
+                errors.Add("Password minimum length must be 6 symbols");
+            }
+            if (IsEmailValid(user.Email))
+            {
+                errors.Add("Incorrect email format");
+
+            }
+            return errors;
+        }
+        private bool IsEmailValid(string email)
+        {
+            return Regex.IsMatch(email, "^[a-zA-Z0-9_.+-]+@[email]+\\.[a-zA-Z0-9-.]+$", RegexOptions.IgnoreCase) == true;
         }
     }
 }

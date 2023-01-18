@@ -1,4 +1,7 @@
 
+using authentication_back.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace authentication_back
 {
     public class Program
@@ -6,7 +9,9 @@ namespace authentication_back
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            builder.Services.AddDbContext<MyDbContext>(options =>
+               options.UseSqlServer(builder.Configuration.GetConnectionString("MyDbContext"))
+           );
             // Add services to the container.
 
             builder.Services.AddControllers();
