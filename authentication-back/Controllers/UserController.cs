@@ -14,7 +14,37 @@ namespace authentication_back.Controllers
             _context = context;
         }
 
-        private readonly List<User> users = new();
+        [HttpGet("getUser")]
+        public Result Getuser(string username)
+        {
+            User user = _context.Users.Where(user => user.Email == username).FirstOrDefault();
+            if (user == null)
+            {
+                return new Result() { Errors = new List<string>() {"Such user not found!"} };
+            }
+            return new Result() { Res = user.Id };
+        }
+
+        [HttpPost("updatePassword")]
+        public Result UpdatePassword([FromBody] Dictionary<string, string> payload)
+        {
+            try
+            {
+                User user = _context.Users.Where(user => user.Id == int.Parse(payload["id"])).FirstOrDefault();
+                if (user != null)
+                {
+                    user.Password = payload["password"];
+                    user.PasswordLastUpdatedAt = DateTime.Now;
+                    _context.SaveChanges();
+                    return new Result() { Res = true };
+                }
+            }
+            catch
+            {
+                return new Result() { Res = false };
+            }
+            return new Result() { Res = false };
+        }
 
         [HttpPost("login")]
         public Result Login([FromBody] Dictionary<string, string> payload)
@@ -49,9 +79,9 @@ namespace authentication_back.Controllers
         {
             bool usernameAlreadyExists = false;
 
-            usernameAlreadyExists = _context.Users.Where(u => u.Email == user["firstname"]).FirstOrDefault() != null;
+            usernameAlreadyExists = _context.Users.Where(u => u.Email == user["email"]).FirstOrDefault() != null;
 
-            if (usernameAlreadyExists)
+            if (!usernameAlreadyExists)
             {
                 User newUser = new()
                 {
@@ -75,7 +105,7 @@ namespace authentication_back.Controllers
                         return new Result() { Res = null, Errors = errors };
                     }
                 }
-                return new Result() { Res = null, };
+                return new Result() { Res = null, Errors = errors };
             }
             return new Result() { Res = null, Errors = new List<string>() { "User already exists!" } };
         }
